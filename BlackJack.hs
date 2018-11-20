@@ -1,8 +1,9 @@
 module BlackJack where
 import Cards
 import RunGame
+import System.Random
 
-import Test.QuickCheck
+import Test.QuickCheck hiding (shuffle)
 
 --A0
 {- size hand2
@@ -133,3 +134,20 @@ playBank' :: Hand -> Hand -> Hand
 playBank' deck bankHand | value bankHand < 16 = playBank' deck' bankHand'
                         | otherwise = bankHand
   where (deck',bankHand') = draw deck bankHand
+
+
+--B5
+
+shuffle :: StdGen -> Hand -> Hand
+
+mkStdGen :: Int -> StdGen
+
+prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
+prop_shuffle_sameCards g c h =
+    c `belongsTo` h == c `belongsTo` shuffle g h
+
+belongsTo :: Card -> Hand -> Bool
+c `belongsTo` Empty = False
+c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
+
+prop_size_shuffle :: StdGen -> Hand -> Bool
