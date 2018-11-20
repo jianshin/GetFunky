@@ -69,19 +69,6 @@ winner guestHand bankHand
 (<+) hand1 (Add card Empty) = (Add card hand1)
 (<+) hand1 (Add card hand2) = (Add card ((<+) hand1 hand2))
 
-
-
-{-Empty <+ Empty = Empty
-(Add card1 hand1) <+ Empty = (Add card1 hand1)
-Empty <+ (Add card2 hand2) = (Add card2 hand2)
-(Add card1 hand1) <+ (Add card2 hand2) =  hand1 <+ (Add card1 hand2)-}
-
-
-
---(<+) (Add card1 hand1) Empty = (Add card1 hand1)
---(<+) Empty (Add card2 hand2) = (Add card2 hand2) <+ hand1 --Remove <+ hand2
---(<+) (Add card1 hand1) (Add card2 hand2) = (Add card1 (Add card2 hand1)) <+ hand2 --Continue Here
-
 prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
 prop_onTopOf_assoc p1 p2 p3 =
   p1<+(p2<+p3) == (p1<+p2)<+p3
@@ -99,6 +86,8 @@ hand3 = Add (Card {rank = Numeric 8, suit = Hearts}) (Add (Card {rank = Numeric 
 
 hand4 = Empty
 
+hand5 = Add(Card {rank = Numeric 2, suit = Hearts}) (Add (Card {rank = Numeric 2, suit = Hearts}) Empty)
+
 test1 :: Hand -> Hand -> Hand -> Hand
 test1 hand1 hand2 hand3 = hand1<+(hand2<+hand3)
 
@@ -109,9 +98,8 @@ test2 :: Hand -> Hand -> Hand
 test2 hand1 hand2 = hand1<+hand2
 
 --B2
-
 fullHand :: Hand
-fullHand = fullSuit Hearts <+ 
+fullHand = fullSuit Hearts <+
     fullSuit Diamonds <+
     fullSuit Spades <+
     fullSuit Clubs
@@ -132,8 +120,16 @@ fullSuit suit = (Add (Card Ace suit)
   (Add (Card (Numeric 2) suit) Empty)))))))))))))
 
 --B3
-
 draw :: Hand -> Hand -> (Hand,Hand)
 draw Empty _ = error "draw: The deck is empty."
-draw (Add cardDeck handDeck) hand = 
+draw (Add cardDeck handDeck) hand =
   (handDeck, Add cardDeck hand)
+
+--B4
+playBank :: Hand -> Hand
+playBank bankHand = playBank' fullHand bankHand
+
+playBank' :: Hand -> Hand -> Hand
+playBank' deck bankHand | value bankHand < 16 = playBank' deck' bankHand'
+                        | otherwise = bankHand
+  where (deck',bankHand') = draw deck bankHand
