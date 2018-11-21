@@ -119,8 +119,9 @@ playBank' deck bankHand | value bankHand < 16 = playBank' deck' bankHand'
 --B5
 shuffle :: StdGen -> Hand -> Hand
 shuffle _ Empty = Empty
-shuffle g deck =  
-  where (number, g1) = (randomR (0, size(deck)) (mkStdGen size(deck)))
+shuffle g deck  = Add card (shuffle g' (notShuffledDeck card deck))
+  where (number, g') = randomR (0, size deck - 1) g
+        card         = findIndex number deck
 
 
 findIndex :: Int -> Hand -> Card
@@ -132,15 +133,7 @@ notShuffledDeck _ Empty = Empty
 notShuffledDeck pickedCard (Add card hand) | pickedCard == card = (notShuffledDeck pickedCard hand)
                                            | otherwise = Add card (notShuffledDeck pickedCard hand)
 
-randomizedNumber :: StdGen -> Int -> Int
-randomizedNumber g high = number
-  where (number, g1) = (randomR (0, high) (mkStdGen high))
-
-
---mkStdGen :: Int -> StdGen
-
-
-{-prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
+prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
 prop_shuffle_sameCards g c h =
     c `belongsTo` h == c `belongsTo` shuffle g h
 
@@ -148,12 +141,12 @@ belongsTo :: Card -> Hand -> Bool
 c `belongsTo` Empty = False
 c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
 
-prop_size_shuffle :: StdGen -> Hand -> Bool-}
+prop_size_shuffle :: StdGen -> Hand -> Bool
+prop_size_shuffle g h = size h == size (shuffle g h)
 
 
 
-
-hand1 = Add (Card {rank = Numeric 5, suit = Hearts}) (Add (Card {rank = Queen, suit = Diamonds}) (Add (Card {rank = Numeric 9, suit = Clubs}) Empty))
+hand1 = Add (Card {rank = Numeric 5, suit = Hearts}) (Add (Card {rank = Queen, suit = Diamonds}) (Add (Card {rank = Numeric 9, suit = Clubs}) (Add (Card {rank = Queen, suit = Diamonds}) Empty)))
 
 hand2 = Add (Card {rank = Numeric 7, suit = Diamonds}) (Add (Card {rank = Numeric 4, suit = Diamonds}) (Add (Card {rank = Numeric 3, suit = Diamonds})  Empty))
 
