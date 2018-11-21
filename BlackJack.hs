@@ -78,26 +78,6 @@ prop_size_onTopOf :: Hand -> Hand -> Bool
 prop_size_onTopOf p1 p2 =
   size p1 + size p2 == size (p1 <+ p2)
 
-
-hand1 = Add (Card {rank = Numeric 5, suit = Hearts}) (Add (Card {rank = Queen, suit = Diamonds}) (Add (Card {rank = Numeric 9, suit = Clubs}) Empty))
-
-hand2 = Add (Card {rank = Numeric 7, suit = Diamonds}) (Add (Card {rank = Numeric 4, suit = Diamonds}) (Add (Card {rank = Numeric 3, suit = Diamonds})  Empty))
-
-hand3 = Add (Card {rank = Numeric 8, suit = Hearts}) (Add (Card {rank = Numeric 5, suit = Diamonds}) Empty)
-
-hand4 = Empty
-
-hand5 = Add(Card {rank = Numeric 2, suit = Hearts}) (Add (Card {rank = Numeric 2, suit = Hearts}) Empty)
-
-test1 :: Hand -> Hand -> Hand -> Hand
-test1 hand1 hand2 hand3 = hand1<+(hand2<+hand3)
-
-test11 :: Hand -> Hand -> Hand -> Hand
-test11 hand1 hand2 hand3 = (hand1<+hand2)<+hand3
-
-test2 :: Hand -> Hand -> Hand
-test2 hand1 hand2 = hand1<+hand2
-
 --B2
 fullHand :: Hand
 fullHand = fullSuit Hearts <+
@@ -138,18 +118,29 @@ playBank' deck bankHand | value bankHand < 16 = playBank' deck' bankHand'
 
 --B5
 shuffle :: StdGen -> Hand -> Hand
-shuffle g fullHand
+shuffle _ Empty = Empty
+shuffle g deck =  
+  where (number, g1) = (randomR (0, size(deck)) (mkStdGen size(deck)))
 
 
 findIndex :: Int -> Hand -> Card
 findIndex 0 (Add card hand) = card
-findIndex index (Add Card hand) = findIndex (index-1) hand
+findIndex index (Add card hand) = findIndex (index-1) hand
+
+notShuffledDeck :: Card -> Hand -> Hand
+notShuffledDeck _ Empty = Empty
+notShuffledDeck pickedCard (Add card hand) | pickedCard == card = (notShuffledDeck pickedCard hand)
+                                           | otherwise = Add card (notShuffledDeck pickedCard hand)
+
+randomizedNumber :: StdGen -> Int -> Int
+randomizedNumber g high = number
+  where (number, g1) = (randomR (0, high) (mkStdGen high))
 
 
 --mkStdGen :: Int -> StdGen
 
 
-prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
+{-prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
 prop_shuffle_sameCards g c h =
     c `belongsTo` h == c `belongsTo` shuffle g h
 
@@ -157,4 +148,26 @@ belongsTo :: Card -> Hand -> Bool
 c `belongsTo` Empty = False
 c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
 
-prop_size_shuffle :: StdGen -> Hand -> Bool
+prop_size_shuffle :: StdGen -> Hand -> Bool-}
+
+
+
+
+hand1 = Add (Card {rank = Numeric 5, suit = Hearts}) (Add (Card {rank = Queen, suit = Diamonds}) (Add (Card {rank = Numeric 9, suit = Clubs}) Empty))
+
+hand2 = Add (Card {rank = Numeric 7, suit = Diamonds}) (Add (Card {rank = Numeric 4, suit = Diamonds}) (Add (Card {rank = Numeric 3, suit = Diamonds})  Empty))
+
+hand3 = Add (Card {rank = Numeric 8, suit = Hearts}) (Add (Card {rank = Numeric 5, suit = Diamonds}) Empty)
+
+hand4 = Empty
+
+hand5 = Add(Card {rank = Numeric 2, suit = Hearts}) (Add (Card {rank = Numeric 2, suit = Hearts}) Empty)
+
+test1 :: Hand -> Hand -> Hand -> Hand
+test1 hand1 hand2 hand3 = hand1<+(hand2<+hand3)
+
+test11 :: Hand -> Hand -> Hand -> Hand
+test11 hand1 hand2 hand3 = (hand1<+hand2)<+hand3
+
+test2 :: Hand -> Hand -> Hand
+test2 hand1 hand2 = hand1<+hand2
