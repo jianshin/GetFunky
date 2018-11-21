@@ -151,6 +151,19 @@ c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
 prop_size_shuffle :: StdGen -> Hand -> Bool-}
 
 
+implementation = Interface
+  { iEmpty    = empty
+  , iFullDeck = fullDeck
+  , iValue    = value
+  , iGameOver = gameOver
+  , iWinner   = winner 
+  , iDraw     = draw
+  , iPlayBank = playBank
+  , iShuffle  = shuffle
+  }
+
+main :: IO ()
+main = runGame implementation
 
 
 hand1 = Add (Card {rank = Numeric 5, suit = Hearts}) (Add (Card {rank = Queen, suit = Diamonds}) (Add (Card {rank = Numeric 9, suit = Clubs}) Empty))
