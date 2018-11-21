@@ -1,8 +1,8 @@
 module BlackJack where
 import Cards
 import RunGame
-import System.Random
 
+import System.Random
 import Test.QuickCheck hiding (shuffle)
 
 --A0
@@ -137,10 +137,17 @@ playBank' deck bankHand | value bankHand < 16 = playBank' deck' bankHand'
 
 
 --B5
-
 shuffle :: StdGen -> Hand -> Hand
+shuffle g fullHand
 
-mkStdGen :: Int -> StdGen
+
+findIndex :: Int -> Hand -> Card
+findIndex 0 (Add card hand) = card
+findIndex index (Add Card hand) = findIndex (index-1) hand
+
+
+--mkStdGen :: Int -> StdGen
+
 
 prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
 prop_shuffle_sameCards g c h =
