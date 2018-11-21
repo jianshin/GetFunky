@@ -138,7 +138,7 @@ playBank' deck bankHand | value bankHand < 16 = playBank' deck' bankHand'
 
 --B5
 shuffle :: StdGen -> Hand -> Hand
---shuffle g fullHand
+shuffle g fullHand
 
 
 findIndex :: Int -> Hand -> Card
@@ -147,6 +147,7 @@ findIndex index (Add Card hand) = findIndex (index-1) hand
 
 
 --mkStdGen :: Int -> StdGen
+
 
 prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
 prop_shuffle_sameCards g c h =
