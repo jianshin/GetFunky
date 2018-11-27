@@ -31,15 +31,15 @@ allBlankSudoku = Sudoku (replicate 9 (replicate 9 Nothing))
 
 --A2
 isSudoku :: Sudoku -> Bool
-isSudoku sudoku = length (rows sudoku) == 9 && 
-    and (map (\row -> length row == 9 && and (map (isElement) row)) 
-        (rows sudoku))
+isSudoku sudoku = length (rows sudoku) == 9 && and
+    (map (\row -> length row == 9)(rows sudoku))
 
+        --(map (isElement) row)
 isElement :: Maybe Int -> Bool
 isElement Nothing = True
 isElement (Just n) = elem n [1..9]
 
 --A3
 isFilled :: Sudoku -> Bool
-isFilled sudoku = map (map isElement ((row) (rows sudoku)))
+isFilled sudoku = map (\row -> isElement row)(rows sudoku)
 
