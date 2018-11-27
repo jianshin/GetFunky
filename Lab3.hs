@@ -61,3 +61,17 @@ makeChar Nothing = '.'
 makeChar (Just n) = intToDigit n
 
 --B2
+readSudoku :: FilePath -> IO Sudoku
+readSudoku file = do sudoku <- stringToSudoku (readFile file)
+                     return (read sudoku)
+
+stringToSudoku :: String -> Sudoku
+stringToSudoku string = Sudoku (map transformFile (lines string))
+
+transformFile :: String -> [Maybe Int]
+transformFile string = map makeMaybeInt string
+
+makeMaybeInt :: Char -> Maybe Int
+makeMaybeInt char 
+        | char == '.' = Nothing
+        | char `elem` "123456789" = Just (digitToInt char)
