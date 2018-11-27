@@ -1,5 +1,8 @@
+module Sudoku where
 
+import Test.QuickCheck
 
+-------------------------------------------------------------------
 --Examples
 example :: Sudoku
 example =
@@ -18,7 +21,7 @@ example =
     n = Nothing
     j = Just
 
--------------------------------------------------------------------
+----------------------------------A--------------------------------
 
 data Sudoku = Sudoku { rows :: [[Maybe Int]] }
 
@@ -28,12 +31,15 @@ allBlankSudoku = Sudoku (replicate 9 (replicate 9 Nothing))
 
 --A2
 isSudoku :: Sudoku -> Bool
-isSudoku sudoku {list}
-    | sudoku [] = False
-    | rows /= 9 = False
-    | otherwise = True
-    
--- 9*9 rows
--- !=[] blank
--- 
+isSudoku sudoku = length (rows sudoku) == 9 && 
+    and (map (\row -> length row == 9 && and (map (isElement) row)) 
+        (rows sudoku))
+
+isElement :: Maybe Int -> Bool
+isElement Nothing = True
+isElement (Just n) = elem n [1..9]
+
+--A3
+isFilled :: Sudoku -> Bool
+isFilled sudoku = map (map isElement ((row) (rows sudoku)))
 
