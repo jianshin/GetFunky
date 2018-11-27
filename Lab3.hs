@@ -62,8 +62,8 @@ makeChar (Just n) = intToDigit n
 
 --B2
 readSudoku :: FilePath -> IO Sudoku
-readSudoku file = do sudoku <- stringToSudoku (readFile file)
-                     return (read sudoku)
+readSudoku file = do sudoku <- (readFile file)
+                     return (stringToSudoku(sudoku))
 
 stringToSudoku :: String -> Sudoku
 stringToSudoku string = Sudoku (map transformFile (lines string))
