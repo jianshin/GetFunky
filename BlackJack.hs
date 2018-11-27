@@ -64,29 +64,33 @@ winner guestHand bankHand
   | otherwise = Bank
 
 --B1
--- | Function that takes two hands and them on top of each other
+-- | Function that takes two hands and put them on top of each other
 (<+) :: Hand -> Hand -> Hand
 (<+) hand1 Empty = hand1
-(<+) hand1 (Add card Empty) = (Add card hand1)
+(<+) hand1 (Add card Empty) = Add card hand1
 (<+) hand1 (Add card hand2) = (Add card ((<+) hand1 hand2))
 
+-- | A test that checks if the operator <+ works as it should
 prop_onTopOf_assoc :: Hand -> Hand -> Hand -> Bool
 prop_onTopOf_assoc p1 p2 p3 =
   p1<+(p2<+p3) == (p1<+p2)<+p3
 
+-- | A test that checks that the size of the hands stay the same after using the operator <+
 prop_size_onTopOf :: Hand -> Hand -> Bool
 prop_size_onTopOf p1 p2 =
   size p1 + size p2 == size (p1 <+ p2)
 
 --B2
-fullHand :: Hand
-fullHand = fullSuit Hearts <+
+-- | A function that returns a full stacked deck
+fullDeck :: Hand
+fullDeck = fullSuit Hearts <+
     fullSuit Diamonds <+
     fullSuit Spades <+
     fullSuit Clubs
 
+-- | A function that returns all the cards in one suit
 fullSuit :: Suit -> Hand
-fullSuit suit = (Add (Card Ace suit)
+fullSuit suit = Add (Card Ace suit)
   (Add (Card King suit)
   (Add (Card Queen suit)
   (Add (Card Jack suit)
@@ -98,52 +102,67 @@ fullSuit suit = (Add (Card Ace suit)
   (Add (Card (Numeric 5) suit)
   (Add (Card (Numeric 4) suit)
   (Add (Card (Numeric 3) suit)
-  (Add (Card (Numeric 2) suit) Empty)))))))))))))
+  (Add (Card (Numeric 2) suit) Empty))))))))))))
 
 --B3
+-- | A function that draws a card
 draw :: Hand -> Hand -> (Hand,Hand)
 draw Empty _ = error "draw: The deck is empty."
 draw (Add cardDeck handDeck) hand =
   (handDeck, Add cardDeck hand)
 
 --B4
+-- | A function that plays for the bank
 playBank :: Hand -> Hand
-playBank bankHand = playBank' fullHand bankHand
+playBank bankHand = playBank' bankHand Empty
 
+-- | A helper function for playBank
 playBank' :: Hand -> Hand -> Hand
-playBank' deck bankHand | value bankHand < 16 = playBank' deck' bankHand'
-                        | otherwise = bankHand
+playBank' deck bankHand | value bankHand' < 16 = playBank' deck' bankHand'
+                        | otherwise = bankHand'
   where (deck',bankHand') = draw deck bankHand
 
 
 --B5
+-- | A function that shuffles the deck
 shuffle :: StdGen -> Hand -> Hand
 shuffle _ Empty = Empty
 shuffle g deck  = Add card (shuffle g' (notShuffledDeck card deck))
   where (number, g') = randomR (0, size deck - 1) g
         card         = findIndex number deck
 
-
+-- | A function that finds a given random card
 findIndex :: Int -> Hand -> Card
 findIndex 0 (Add card hand) = card
 findIndex index (Add card hand) = findIndex (index-1) hand
 
+-- | A function that retuns a deck without the random given card from findIndex
 notShuffledDeck :: Card -> Hand -> Hand
 notShuffledDeck _ Empty = Empty
-notShuffledDeck pickedCard (Add card hand) | pickedCard == card = (notShuffledDeck pickedCard hand)
+notShuffledDeck pickedCard (Add card hand) | pickedCard == card = (tempDeck hand)
                                            | otherwise = Add card (notShuffledDeck pickedCard hand)
 
+-- | A function that makes it possible to have two of the same card in one deck without one of them
+--    being removed after shuffeling the deck.
+tempDeck :: Hand -> Hand
+tempDeck Empty = Empty
+tempDeck (Add card hand) = Add card (tempDeck hand)
+
+-- | A test that checks that the same cards exist in a deck before and after it is shuffeled.
 prop_shuffle_sameCards :: StdGen -> Card -> Hand -> Bool
 prop_shuffle_sameCards g c h =
     c `belongsTo` h == c `belongsTo` shuffle g h
 
+-- | A helper function given by the lab instructions, checks if a card exist in a deck.
 belongsTo :: Card -> Hand -> Bool
 c `belongsTo` Empty = False
 c `belongsTo` (Add c' h) = c == c' || c `belongsTo` h
 
+-- | A test that checks if the size of a deck is the same before and after it is shuffeled
 prop_size_shuffle :: StdGen -> Hand -> Bool
 prop_size_shuffle g h = size h == size (shuffle g h)
 
+-- | A game interface that makes it possible to run the game.
 implementation = Interface
   { iEmpty    = empty
   , iFullDeck = fullDeck
@@ -155,25 +174,6 @@ implementation = Interface
   , iShuffle  = shuffle
   }
 
+-- | A function that takes inputs from the user
 main :: IO ()
 main = runGame implementation
-
-
-hand1 = Add (Card {rank = Numeric 5, suit = Hearts}) (Add (Card {rank = Queen, suit = Diamonds}) (Add (Card {rank = Numeric 9, suit = Clubs}) (Add (Card {rank = Queen, suit = Diamonds}) Empty)))
-
-hand2 = Add (Card {rank = Numeric 7, suit = Diamonds}) (Add (Card {rank = Numeric 4, suit = Diamonds}) (Add (Card {rank = Numeric 3, suit = Diamonds})  Empty))
-
-hand3 = Add (Card {rank = Numeric 8, suit = Hearts}) (Add (Card {rank = Numeric 5, suit = Diamonds}) Empty)
-
-hand4 = Empty
-
-hand5 = Add(Card {rank = Numeric 2, suit = Hearts}) (Add (Card {rank = Numeric 2, suit = Hearts}) Empty)
-
-test1 :: Hand -> Hand -> Hand -> Hand
-test1 hand1 hand2 hand3 = hand1<+(hand2<+hand3)
-
-test11 :: Hand -> Hand -> Hand -> Hand
-test11 hand1 hand2 hand3 = (hand1<+hand2)<+hand3
-
-test2 :: Hand -> Hand -> Hand
-test2 hand1 hand2 = hand1<+hand2
