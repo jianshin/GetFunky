@@ -1,6 +1,9 @@
 module Sudoku where
 
 import Test.QuickCheck
+import Data.Maybe
+import Data.Char
+import Data.List
 
 -------------------------------------------------------------------
 --Examples
@@ -41,5 +44,6 @@ isElement (Just n) = elem n [1..9]
 
 --A3
 isFilled :: Sudoku -> Bool
-isFilled sudoku = map (\row -> isElement row)(rows sudoku)
-
+isFilled sudoku = isFilled sudoku && all isRowFilled (rows sudoku)
+  where
+    isRowFilled = all (not . isNothing)
