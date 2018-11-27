@@ -47,3 +47,17 @@ isFilled :: Sudoku -> Bool
 isFilled sudoku = isFilled sudoku && all isRowFilled (rows sudoku)
   where
     isRowFilled = all (not . isNothing)
+
+------------------------------------B----------------------------------------
+--B1
+printSudoku :: Sudoku -> IO ()
+printSudoku sudoku = putStrLn (unlines (map makeAString (rows sudoku)))
+
+makeAString :: [Maybe Int] -> [Char]
+makeAString row = map makeChar row
+
+makeChar :: Maybe Int -> Char
+makeChar Nothing = '.'
+makeChar (Just n) = intToDigit n
+
+--B2
