@@ -1,9 +1,9 @@
 module Sudoku where
 
-import Test.QuickCheck
 import Data.Maybe
 import Data.Char
 import Data.List
+import Test.QuickCheck
 
 -------------------------------------------------------------------
 --Examples
@@ -63,7 +63,9 @@ makeChar (Just n) = intToDigit n
 --B2
 readSudoku :: FilePath -> IO Sudoku
 readSudoku file = do sudoku <- (readFile file)
-                     return (stringToSudoku(sudoku))
+                     if isSudoku (stringToSudoku sudoku)
+                     then return (stringToSudoku(sudoku))
+                     else error "Not a sudoku"
 
 stringToSudoku :: String -> Sudoku
 stringToSudoku string = Sudoku (map transformFile (lines string))
@@ -75,3 +77,17 @@ makeMaybeInt :: Char -> Maybe Int
 makeMaybeInt char 
         | char == '.' = Nothing
         | char `elem` "123456789" = Just (digitToInt char)
+
+--------------------------------C---------------------------------
+--C1
+cell :: Gen (Maybe Int)
+cell = frequency [(7, return Nothing), (3, do n <- choose (1,9) 
+                                              return (Just n))]
+
+--C2                                              
+-- | an instance for generating Arbitrary Sudokus
+instance Arbitrary Sudoku where
+    arbitrary =
+      do rows <- vectorOf 9 (vectorOf 9 cell)
+         return (Sudoku rows)
+
