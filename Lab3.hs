@@ -27,6 +27,7 @@ example =
 ----------------------------------A--------------------------------
 
 data Sudoku = Sudoku { rows :: [[Maybe Int]] }
+    deriving Show
 
 --A1
 allBlankSudoku :: Sudoku
@@ -90,4 +91,21 @@ instance Arbitrary Sudoku where
     arbitrary =
       do rows <- vectorOf 9 (vectorOf 9 cell)
          return (Sudoku rows)
+
+--C3
+prop_Sudoku :: Sudoku -> Bool
+prop_Sudoku sudoku = isSudoku sudoku
+
+--------------------------------------D-------------------------------------
+
+type Block = [Maybe Int]
+
+--D1
+isOkayBlock :: Block -> Bool
+isOkayBlock block = (length (removeNothing block) == length block')
+                    where block' = nub(removeNothing block)
+                      
+removeNothing :: [Maybe Int] -> [Maybe Int]
+removeNothing block = filter (not . isNothing) block
+                            
 
