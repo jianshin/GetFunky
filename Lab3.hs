@@ -30,50 +30,60 @@ data Sudoku = Sudoku { rows :: [[Maybe Int]] }
     deriving Show
 
 --A1
+-- returns a blank sudoku
 allBlankSudoku :: Sudoku
 allBlankSudoku = Sudoku (replicate 9 (replicate 9 Nothing))
 
 --A2
+-- checks if sudoku is valid
 isSudoku :: Sudoku -> Bool
 isSudoku sudoku = length (rows sudoku) == 9 && and
     (map (\row -> length row == 9)(rows sudoku))
 
-        --(map (isElement) row)
+-- checks if the list elements are real sudoku elements
 isElement :: Maybe Int -> Bool
 isElement Nothing = True
-isElement (Just n) = elem n [1..9]
+isElement (Just n) = n `elem` [1..9]
 
 --A3
+-- checks if a sudoku is completed
 isFilled :: Sudoku -> Bool
 isFilled sudoku = isFilled sudoku && all isRowFilled (rows sudoku)
   where
-    isRowFilled = all (not . isNothing)
+    isRowFilled = all isJust
 
 ------------------------------------B----------------------------------------
 --B1
+-- prints out the sudoku
 printSudoku :: Sudoku -> IO ()
 printSudoku sudoku = putStrLn (unlines (map makeAString (rows sudoku)))
 
+-- Makes a string out of the list elements
 makeAString :: [Maybe Int] -> [Char]
 makeAString row = map makeChar row
 
+-- turns the elements into characters
 makeChar :: Maybe Int -> Char
 makeChar Nothing = '.'
 makeChar (Just n) = intToDigit n
 
 --B2
+-- reads the sudoku from a file
 readSudoku :: FilePath -> IO Sudoku
 readSudoku file = do sudoku <- (readFile file)
                      if isSudoku (stringToSudoku sudoku)
                      then return (stringToSudoku(sudoku))
                      else error "Not a sudoku"
 
+--turns the string from the file into a valid sudoku
 stringToSudoku :: String -> Sudoku
 stringToSudoku string = Sudoku (map transformFile (lines string))
 
+--helper for above function
 transformFile :: String -> [Maybe Int]
 transformFile string = map makeMaybeInt string
 
+--same as above
 makeMaybeInt :: Char -> Maybe Int
 makeMaybeInt char 
         | char == '.' = Nothing
@@ -81,6 +91,7 @@ makeMaybeInt char
 
 --------------------------------C---------------------------------
 --C1
+--creates sudoku cells
 cell :: Gen (Maybe Int)
 cell = frequency [(7, return Nothing), (3, do n <- choose (1,9) 
                                               return (Just n))]
@@ -93,6 +104,7 @@ instance Arbitrary Sudoku where
          return (Sudoku rows)
 
 --C3
+--tests if it is a sudoku
 prop_Sudoku :: Sudoku -> Bool
 prop_Sudoku sudoku = isSudoku sudoku
 
@@ -101,44 +113,63 @@ prop_Sudoku sudoku = isSudoku sudoku
 type Block = [Maybe Int]
 
 --D1
+--checks if a block is okay
 isOkayBlock :: Block -> Bool
 isOkayBlock block = (length (removeNothing block) == length block')
                     where block' = nub(removeNothing block)
-                      
+                  
+--helper for function above, removes Nothing:s
 removeNothing :: [Maybe Int] -> [Maybe Int]
 removeNothing block = filter (not . isNothing) block
                             
 --D2
+--makes blocks 
 blocks :: Sudoku -> [Block]
 blocks sudoku = [] ++ rows sudoku ++ toCols sudoku ++ toBlocks sudoku
 
+--makes columns to rows
 toCols :: Sudoku -> [[Maybe Int]]
 toCols sudoku = transpose (rows sudoku)
 
+--helper for function above, makes the 3x3 squares
 toBlocks :: Sudoku -> [[Maybe Int]]
-toBlocks sudoku = [] ++ firstBlock (take 3 (rows sudoku)) ++ secondBlock (take 3 (rows sudoku)) ++ thirdBlock (take 3 (rows sudoku))
-        ++ firstBlock (slice' 3 6 (rows sudoku)) ++ secondBlock (slice' 3 6 (rows sudoku)) ++ thirdBlock (slice' 3 6 (rows sudoku)) 
-        ++ firstBlock (drop 6 (rows sudoku)) ++ secondBlock (drop 6 (rows sudoku)) ++ thirdBlock (drop 6 (rows sudoku))
+toBlocks sudoku = [] 
+    ++ firstBlock (take 3 (rows sudoku)) 
+    ++ secondBlock (take 3 (rows sudoku)) 
+    ++ thirdBlock (take 3 (rows sudoku))
+    ++ firstBlock (slice' 3 6 (rows sudoku)) 
+    ++ secondBlock (slice' 3 6 (rows sudoku))
+    ++ thirdBlock (slice' 3 6 (rows sudoku)) 
+    ++ firstBlock (drop 6 (rows sudoku)) 
+    ++ secondBlock (drop 6 (rows sudoku)) 
+    ++ thirdBlock (drop 6 (rows sudoku))
 
+--helps the helper function
 firstBlock :: [[Maybe Int]] -> [[Maybe Int]] 
 firstBlock rows = [concat ([] ++ map (take 3) rows)]
 
+--helps the helper function
 secondBlock :: [[Maybe Int]] -> [[Maybe Int]]
 secondBlock rows = [concat ([] ++ map (slice 3 6) rows)]
 
+--helps the helper function
 thirdBlock :: [[Maybe Int]] -> [[Maybe Int]]
 thirdBlock rows = [concat ([] ++ map (drop 6) rows)]
 
+--helps the helper function
 slice :: Int -> Int -> [Maybe Int] -> [Maybe Int]
 slice from to list = take (to - from) (drop from list)
 
+--helps the helper function
 slice' :: Int -> Int -> [[Maybe Int]] -> [[Maybe Int]]
 slice' from to list = take (to - from) (drop from list)
 
+--tests if blocks in sudoku is valid
 prop_blocks_lengths :: Sudoku -> Bool
 prop_blocks_lengths sudoku = length blocks' == 27 && all (\b -> length b == 9) blocks'
         where blocks' = blocks sudoku
 
 --D3
+-- checks if sudoku is a valid sudoku
 isOkay :: Sudoku -> Bool
 isOkay sudoku = all isOkayBlock (blocks sudoku)
