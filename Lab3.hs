@@ -108,4 +108,37 @@ isOkayBlock block = (length (removeNothing block) == length block')
 removeNothing :: [Maybe Int] -> [Maybe Int]
 removeNothing block = filter (not . isNothing) block
                             
+--D2
+blocks :: Sudoku -> [Block]
+blocks sudoku = [] ++ rows sudoku ++ toCols sudoku ++ toBlocks sudoku
 
+toCols :: Sudoku -> [[Maybe Int]]
+toCols sudoku = transpose (rows sudoku)
+
+toBlocks :: Sudoku -> [[Maybe Int]]
+toBlocks sudoku = [] ++ firstBlock (take 3 (rows sudoku)) ++ secondBlock (take 3 (rows sudoku)) ++ thirdBlock (take 3 (rows sudoku))
+        ++ firstBlock (slice' 3 6 (rows sudoku)) ++ secondBlock (slice' 3 6 (rows sudoku)) ++ thirdBlock (slice' 3 6 (rows sudoku)) 
+        ++ firstBlock (drop 6 (rows sudoku)) ++ secondBlock (drop 6 (rows sudoku)) ++ thirdBlock (drop 6 (rows sudoku))
+
+firstBlock :: [[Maybe Int]] -> [[Maybe Int]] 
+firstBlock rows = [concat ([] ++ map (take 3) rows)]
+
+secondBlock :: [[Maybe Int]] -> [[Maybe Int]]
+secondBlock rows = [concat ([] ++ map (slice 3 6) rows)]
+
+thirdBlock :: [[Maybe Int]] -> [[Maybe Int]]
+thirdBlock rows = [concat ([] ++ map (drop 6) rows)]
+
+slice :: Int -> Int -> [Maybe Int] -> [Maybe Int]
+slice from to list = take (to - from) (drop from list)
+
+slice' :: Int -> Int -> [[Maybe Int]] -> [[Maybe Int]]
+slice' from to list = take (to - from) (drop from list)
+
+prop_blocks_lengths :: Sudoku -> Bool
+prop_blocks_lengths sudoku = length blocks' == 27 && all (\b -> length b == 9) blocks'
+        where blocks' = blocks sudoku
+
+--D3
+isOkay :: Sudoku -> Bool
+isOkay sudoku = all isOkayBlock (blocks sudoku)
