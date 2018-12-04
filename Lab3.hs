@@ -181,3 +181,9 @@ blanks :: Sudoku -> [Pos]
 blanks sudoku = [(x,y) | (x, row) <- zip[0..8] (rows sudoku),
                          (y, element) <- zip[0..8] row,
                          isNothing element]
+
+prop_blanks_allBlank :: Sudoku -> Bool
+prop_blanks_allBlank sudoku = all isNothing $ map (values sudoku) (blanks sudoku)
+  where values sudoku (x,y) = (rows sudoku !! x) !! y
+
+--E2 
