@@ -188,6 +188,4 @@ prop_blanks_allBlank sudoku = all isNothing $ map (values sudoku) (blanks sudoku
 
 --E2
 (!!=) :: [a] -> (Int,a) -> [a]
-(!!=) [] _ = error "Empty list"
-(!!=) list (0, value) = value : tail list
-(!!=) list (index, value) = head list : (!!=) (tail list) (index-1, value) 
+(!!=) list (index, value) = 
