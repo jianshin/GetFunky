@@ -188,4 +188,18 @@ prop_blanks_allBlank sudoku = all isNothing $ map (values sudoku) (blanks sudoku
 
 --E2
 (!!=) :: [a] -> (Int,a) -> [a]
-(!!=) list (index, value) = 
+(!!=) []      _             = error "Empty list"
+(!!=) (x:xs) (index, value) | length (x:xs) < index = error "Index out of bounds"
+(!!=) (x:xs) (0, value)     = value : xs
+(!!=) (x:xs) (index, value) = x : xs !!= (index-1, value)
+
+prop_bangBangEquals_correct :: Eq a => [a] -> (Int, a) -> Bool
+prop_bangBangEquals_correct [] (_,_)= True
+prop_bangBangEquals_correct list (index, value) =
+  length list == length (list !!= (index', value)) &&
+  (list !!= (index', value)) !! index' == value
+    where index' = abs (mod index (length list))
+  --((list !! index) not (list !!= (index, value) !! index))
+
+
+--E3
