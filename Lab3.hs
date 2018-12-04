@@ -199,7 +199,5 @@ prop_bangBangEquals_correct list (index, value) =
   length list == length (list !!= (index', value)) &&
   (list !!= (index', value)) !! index' == value
     where index' = abs (mod index (length list))
-  --((list !! index) not (list !!= (index, value) !! index))
-
 
 --E3
