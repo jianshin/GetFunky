@@ -186,4 +186,6 @@ prop_blanks_allBlank :: Sudoku -> Bool
 prop_blanks_allBlank sudoku = all isNothing $ map (values sudoku) (blanks sudoku)
   where values sudoku (x,y) = (rows sudoku !! x) !! y
 
---E2 
+--E2
+(!!=) :: [a] -> (Int,a) -> [a]
+(!!=) list (index, value) = 
