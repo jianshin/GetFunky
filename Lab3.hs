@@ -207,7 +207,7 @@ update sudoku (x, y) value = Sudoku {rows = (!!=) (rows sudoku) (abs x, row')}
           row' = (!!=) row (abs y, value)
 
 prop_update_updated :: Sudoku -> Pos -> Maybe Int -> Bool
-prop_update_updated sudoku (x,y) value = pos == value 
+prop_update_updated sudoku (x,y) value = pos == value
     where row = (!!) (rows sudoku') (abs x')
           pos = (!!) row (abs y')
           sudoku' = update sudoku (x',y') value
@@ -215,9 +215,40 @@ prop_update_updated sudoku (x,y) value = pos == value
           y' = mod y 8
 
 --E4
---candidates :: Sudoku -> Pos -> [Int]
---candidates sudoku (x,y) = 
+candidates :: Sudoku -> Pos -> [Int]
+candidates sudoku (x,y) | isJust pos' = []
+                        | otherwise = getCandidates (extractInts (row ++ col ++ block)) [1..9]
+  where
+    pos   = rows' !! (abs x)
+    pos'  = pos !! (abs y)
+    rows' = rows sudoku
+    row   = rows' !! x
+    col   = (transpose rows') !! y
+    block = getBlock sudoku (x,y)
 
---row (x,y) = (!!) (rows sudoku) x
---col (x,y) = (!!) (toCols sudoku) y  
+getBlock :: Sudoku -> Pos -> [Maybe Int]
+getBlock sudoku (x,y)
+  | x `elem` [0..2] && y `elem` [0..2] = getValues $ firstBlock (take 3 (rows sudoku))
+  | x `elem` [0..2] && y `elem` [3..5] = getValues $ secondBlock (take 3 (rows sudoku))
+  | x `elem` [0..2] && y `elem` [6..8] = getValues $ thirdBlock (take 3 (rows sudoku))
+  | x `elem` [3..5] && y `elem` [0..2] = getValues $ firstBlock (slice' 3 6 (rows sudoku))
+  | x `elem` [3..5] && y `elem` [3..5] = getValues $ secondBlock (slice' 3 6 (rows sudoku))
+  | x `elem` [3..5] && y `elem` [6..8] = getValues $ thirdBlock (slice' 3 6 (rows sudoku))
+  | x `elem` [6..8] && y `elem` [0..2] = getValues $ firstBlock (drop 6 (rows sudoku))
+  | x `elem` [6..8] && y `elem` [3..5] = getValues $ secondBlock (drop 6 (rows sudoku))
+  | x `elem` [6..8] && y `elem` [6..8] = getValues $ thirdBlock (drop 6 (rows sudoku))
 
+getValues :: [[Maybe Int]] -> [Maybe Int]
+getValues [[]] = []
+getValues [(x:xs)] | isJust x = [x] ++ getValues [xs]
+                   | otherwise = getValues [xs]
+
+extractInts :: [Maybe Int] -> [Int]
+extractInts []            = []
+extractInts (Nothing:xs)  = extractInts xs
+extractInts (Just x:xs)   = [x] ++ extractInts xs
+
+getCandidates :: [Int] -> [Int] -> [Int]
+getCandidates _ [] = []
+getCandidates list (x:xs) | x `notElem` list = [x] ++ getCandidates list xs
+                          | otherwise  = getCandidates list xs
