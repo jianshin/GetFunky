@@ -252,3 +252,16 @@ getCandidates :: [Int] -> [Int] -> [Int]
 getCandidates _ [] = []
 getCandidates list (x:xs) | x `notElem` list = [x] ++ getCandidates list xs
                           | otherwise  = getCandidates list xs
+
+--F1
+solve :: Sudoku -> Maybe Sudoku
+solve sudoku | not $ isSudoku sudoku = Nothing
+             | not $ isOkay sudoku = Nothing
+             | otherwise = solve' sudoku (blanks sudoku)
+
+solve' :: Sudoku -> [Pos] -> Maybe Sudoku
+solve' sudoku []      = Just sudoku
+solve' sudoku (x:xs)  = listToMaybe $ catMaybes currentSudoku
+  where
+    candidate = candidates sudoku x
+    currentSudoku = [solve' (update sudoku x $ Just candidate') xs | candidate' <- candidate]
