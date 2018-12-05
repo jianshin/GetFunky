@@ -201,3 +201,23 @@ prop_bangBangEquals_correct list (index, value) =
     where index' = abs (mod index (length list))
 
 --E3
+update :: Sudoku -> Pos -> Maybe Int -> Sudoku
+update sudoku (x, y) value = Sudoku {rows = (!!=) (rows sudoku) (abs x, row')}
+    where row = (!!) (rows sudoku) (abs x)
+          row' = (!!=) row (abs y, value)
+
+prop_update_updated :: Sudoku -> Pos -> Maybe Int -> Bool
+prop_update_updated sudoku (x,y) value = pos == value 
+    where row = (!!) (rows sudoku') (abs x')
+          pos = (!!) row (abs y')
+          sudoku' = update sudoku (x',y') value
+          x' = mod x 8
+          y' = mod y 8
+
+--E4
+--candidates :: Sudoku -> Pos -> [Int]
+--candidates sudoku (x,y) = 
+
+--row (x,y) = (!!) (rows sudoku) x
+--col (x,y) = (!!) (toCols sudoku) y  
+
