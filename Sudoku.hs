@@ -27,7 +27,7 @@ example =
 ----------------------------------A--------------------------------
 
 data Sudoku = Sudoku { rows :: [[Maybe Int]] }
-    deriving Show
+    deriving (Show, Eq)
 
 --A1
 -- returns a blank sudoku
@@ -39,11 +39,6 @@ allBlankSudoku = Sudoku (replicate 9 (replicate 9 Nothing))
 isSudoku :: Sudoku -> Bool
 isSudoku sudoku = length (rows sudoku) == 9 && and
     (map (\row -> length row == 9)(rows sudoku))
-
--- checks if the list elements are real sudoku elements
-isElement :: Maybe Int -> Bool
-isElement Nothing = True
-isElement (Just n) = n `elem` [1..9]
 
 --A3
 -- checks if a sudoku is completed
@@ -70,9 +65,9 @@ makeChar (Just n) = intToDigit n
 --B2
 -- reads the sudoku from a file
 readSudoku :: FilePath -> IO Sudoku
-readSudoku file = do sudoku <- (readFile file)
+readSudoku file = do sudoku <- readFile file
                      if isSudoku (stringToSudoku sudoku)
-                     then return (stringToSudoku(sudoku))
+                     then return (stringToSudoku sudoku)
                      else error "Not a sudoku"
 
 --turns the string from the file into a valid sudoku
@@ -115,12 +110,12 @@ type Block = [Maybe Int]
 --D1
 --checks if a block is okay
 isOkayBlock :: Block -> Bool
-isOkayBlock block = (length (removeNothing block) == length block')
+isOkayBlock block = length (removeNothing block) == length block'
                     where block' = nub(removeNothing block)
 
 --helper for function above, removes Nothing:s
 removeNothing :: [Maybe Int] -> [Maybe Int]
-removeNothing block = filter (not . isNothing) block
+removeNothing block = filter isJust block
 
 --D2
 --makes blocks
@@ -177,22 +172,26 @@ isOkay sudoku = all isOkayBlock (blocks sudoku)
 --E1
 type Pos = (Int,Int)
 
+-- | A function that gives all blank spaces in a sudoku
 blanks :: Sudoku -> [Pos]
 blanks sudoku = [(x,y) | (x, row) <- zip[0..8] (rows sudoku),
                          (y, element) <- zip[0..8] row,
                          isNothing element]
 
+-- | A function that checks that the function blans does twhat it is supposed to do
 prop_blanks_allBlank :: Sudoku -> Bool
 prop_blanks_allBlank sudoku = all isNothing $ map (values sudoku) (blanks sudoku)
   where values sudoku (x,y) = (rows sudoku !! x) !! y
 
 --E2
+-- | An operator that changes a value at a specific index to a new one
 (!!=) :: [a] -> (Int,a) -> [a]
 (!!=) []      _             = error "Empty list"
 (!!=) (x:xs) (index, value) | length (x:xs) < index = error "Index out of bounds"
 (!!=) (x:xs) (0, value)     = value : xs
 (!!=) (x:xs) (index, value) = x : xs !!= (index-1, value)
 
+-- | A funtion that checks that the operator (!!=) does what it is supposed to do
 prop_bangBangEquals_correct :: Eq a => [a] -> (Int, a) -> Bool
 prop_bangBangEquals_correct [] (_,_)= True
 prop_bangBangEquals_correct list (index, value) =
@@ -201,11 +200,13 @@ prop_bangBangEquals_correct list (index, value) =
     where index' = abs (mod index (length list))
 
 --E3
+-- | A funtcion that updates a position in the sudoku with a new value
 update :: Sudoku -> Pos -> Maybe Int -> Sudoku
 update sudoku (x, y) value = Sudoku {rows = (!!=) (rows sudoku) (abs x, row')}
     where row = (!!) (rows sudoku) (abs x)
           row' = (!!=) row (abs y, value)
 
+-- | A function that checks if the function update does what it is supposed to do
 prop_update_updated :: Sudoku -> Pos -> Maybe Int -> Bool
 prop_update_updated sudoku (x,y) value = pos == value
     where row = (!!) (rows sudoku') (abs x')
@@ -215,6 +216,7 @@ prop_update_updated sudoku (x,y) value = pos == value
           y' = mod y 8
 
 --E4
+-- | A function that starts the work for getting the candidates that can fill the blank spots
 candidates :: Sudoku -> Pos -> [Int]
 candidates sudoku (x,y) | isJust pos' = []
                         | otherwise = getCandidates (extractInts (row ++ col ++ block)) [1..9]
@@ -226,6 +228,7 @@ candidates sudoku (x,y) | isJust pos' = []
     col   = (transpose rows') !! y
     block = getBlock sudoku (x,y)
 
+-- | A function that gets the block that the position is in
 getBlock :: Sudoku -> Pos -> [Maybe Int]
 getBlock sudoku (x,y)
   | x `elem` [0..2] && y `elem` [0..2] = getValues $ firstBlock (take 3 (rows sudoku))
@@ -238,30 +241,52 @@ getBlock sudoku (x,y)
   | x `elem` [6..8] && y `elem` [3..5] = getValues $ secondBlock (drop 6 (rows sudoku))
   | x `elem` [6..8] && y `elem` [6..8] = getValues $ thirdBlock (drop 6 (rows sudoku))
 
+-- | A function that takes all Just Ints and removes the Nothings
 getValues :: [[Maybe Int]] -> [Maybe Int]
 getValues [[]] = []
-getValues [(x:xs)] | isJust x = [x] ++ getValues [xs]
+getValues [(x:xs)] | isJust x = x : getValues [xs]
                    | otherwise = getValues [xs]
 
+-- | A function that extracts all Ints from Maybe Ints
 extractInts :: [Maybe Int] -> [Int]
 extractInts []            = []
 extractInts (Nothing:xs)  = extractInts xs
-extractInts (Just x:xs)   = [x] ++ extractInts xs
+extractInts (Just x:xs)   = x : extractInts xs
 
+-- | A function that returns all candidates for a position in the sudoku
 getCandidates :: [Int] -> [Int] -> [Int]
 getCandidates _ [] = []
-getCandidates list (x:xs) | x `notElem` list = [x] ++ getCandidates list xs
+getCandidates list (x:xs) | x `notElem` list = x : getCandidates list xs
                           | otherwise  = getCandidates list xs
 
 --F1
+-- | A funtion that checks if a variable is a sudoku and if it is valid, then solves it
 solve :: Sudoku -> Maybe Sudoku
 solve sudoku | not $ isSudoku sudoku = Nothing
              | not $ isOkay sudoku = Nothing
              | otherwise = solve' sudoku (blanks sudoku)
 
+-- | A function that does the hard work for solving a sudoku using recursion
 solve' :: Sudoku -> [Pos] -> Maybe Sudoku
 solve' sudoku []      = Just sudoku
 solve' sudoku (x:xs)  = listToMaybe $ catMaybes currentSudoku
   where
     candidate = candidates sudoku x
     currentSudoku = [solve' (update sudoku x $ Just candidate') xs | candidate' <- candidate]
+
+--F2
+-- | A function that reads a file and then solves the file if it is a sudoku
+readAndSolve :: FilePath -> IO ()
+readAndSolve file = do sudoku <- readSudoku file
+                       let solved = solve sudoku
+                       printSudoku (fromJust solved)
+
+--F3
+-- | A function that checks if a solved sudoku is a solution for another sudoku
+isSolutionOf :: Sudoku -> Sudoku -> Bool
+isSolutionOf solvedSudoku toSolve = Just solvedSudoku == solve toSolve
+
+--F4
+-- | A function that tests if the solutions are valid
+prop_SolveSound :: Sudoku -> Property
+prop_SolveSound sudoku = isJust (solve sudoku) ==> fromJust (solve sudoku) `isSolutionOf` sudoku
