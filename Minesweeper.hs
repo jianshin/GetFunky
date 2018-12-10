@@ -3,6 +3,7 @@ module Minesweeper where
 import Data.Maybe
 import Data.Char
 import Data.List
+import System.Random
 import Test.QuickCheck
 
 data Minesweeper = Minesweeper {rows :: [[Maybe Int]]}
@@ -11,13 +12,9 @@ data Minesweeper = Minesweeper {rows :: [[Maybe Int]]}
 allBlankMinesweeper :: Minesweeper
 allBlankMinesweeper = Minesweeper (replicate 10 (replicate 10 (Just 0)))
 
---creates sudoku cells
-cell :: Gen (Maybe Int)
-cell = frequency [(1, return Nothing), (9, return (Just 0))]
+bombMaker :: StdGen -> [Int] -> [Int]
+bombMaker g list | length list == 10 = list 
+                 | otherwise = bombMaker g' (nub (list ++ number))
+                        where (number, g') = randomR (0, 99) g
 
---C2
--- | an instance for generating Arbitrary Sudokus
-instance Arbitrary Minesweeper where
-    arbitrary =
-      do rows <- vectorOf 10 (vectorOf 10 cell)
-         return (Minesweeper rows)
+--createMinesweeper
