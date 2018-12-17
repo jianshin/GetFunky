@@ -80,11 +80,9 @@ checkContent minesweeper (x,y) | isNothing ((rows minesweeper !! x) !! y) = Just
                                | otherwise = Just (pos + 10)
   where Just pos = ((rows minesweeper !! x) !! y)
 
-(!!=) :: [a] -> (Int,a) -> [a]
-(!!=) []      _             = error "Empty list"
-(!!=) (x:xs) (index, value) | length (x:xs) < index = error "Index out of bounds"
-(!!=) (x:xs) (0, value)     = value : xs
-(!!=) (x:xs) (index, value) = x : xs !!= (index-1, value)
+--Open surrounding empty cells. Stop when number > 0.
+--openNeighbours :: Minesweeper -> Pos -> Minesweeper
+--openNeighbours mine (x,y) 
 
 wonGame :: Minesweeper -> Bool
 wonGame minesweeper = getWonGameRows (rows minesweeper)
@@ -126,7 +124,7 @@ allBlankMinesweeper = Minesweeper (replicate 10 (replicate 10 (Just 0)))
 checkNeighbours :: Minesweeper -> Pos -> Minesweeper
 checkNeighbours minesw (x,y) 
     | x == 9 && y > 9 = minesw --checked all cells
-    | y <= 9 && isBomb minesw (x,y) = checkNeighbours minesw (x,y+1) --cell is bomb, pass on to next cell in row
+    | y <= 9 && isBomb' minesw (x,y) = checkNeighbours minesw (x,y+1) --cell is bomb, pass on to next cell in row
     | y > 9 = checkNeighbours minesw (x+1,0) --col index out of bounds, start on new row
     | y <= 9 = checkNeighbours (countSurroundingBombs minesw (x,y) (listNeighbours minesw (x,y))) (x,y+1)--count number of bombs surrounding cell
     | otherwise = error "checkNeighbours not working"
@@ -163,15 +161,14 @@ isValid (x,y) = x' && y'
     
 
 --Helper function to checkneighbours, checks if a cell is a bomb
-isBomb :: Minesweeper -> Pos -> Bool
-isBomb mine (x,y) = isNothing ((rows mine !! x) !! y)
+isBomb' :: Minesweeper -> Pos -> Bool
+isBomb' mine (x,y) = isNothing ((rows mine !! x) !! y)
 --start at 0,0
 --recirsively pass on to down and right neighbour
 --check if pos is a bomb
     --if bomb: pass on
     --else check all neighbours is bomb
     --start counter and set number to counter, pass on
-
 
 --bombMaker :: StdGen -> [Int] -> [Int]
 --bombMaker g list | length list == 10 = list
