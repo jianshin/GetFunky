@@ -4,7 +4,7 @@ import Data.Maybe
 import Data.Char
 import Data.List
 import System.Random hiding (shuffle)
-import Test.QuickCheck
+import Test.QuickCheck hiding (shuffle)
 
 data Minesweeper = Minesweeper {rows :: [[Maybe Int]]}
         deriving (Show, Eq)
@@ -81,20 +81,6 @@ checkContent minesweeper (x,y) | isNothing ((rows minesweeper !! x) !! y) = Just
                                | otherwise = Just (pos + 10)
   where Just pos = (rows minesweeper !! x) !! y
 
---openCells :: Minesweeper ->  Pos -> Maybe Int -> Maybe Int -> Minesweeper
---openCells mine pos@(x,y) target replacement =
- --   if((not $ isValid pos) || getValue mine (x,y) /= target) then mine 
-  --  else 
-   --   north
-    --  where mine' = changeCell mine pos replacement
-     --       east = openCells mine' (x+1, y) target replacement
-      --      west = openCells east (x-1, y) target replacement
-       --     south = openCells west (x, y+1) target replacement
-        --    north = openCells south (x, y-1) target replacement
---if Nothing then do nothing
---if Just n, where n > 0 then open then nothing
---else continue
-
 openCells :: Minesweeper ->  Pos -> Minesweeper
 openCells mine pos@(x,y)
     | ((not $ isValid pos) || getValue mine pos == Nothing) = mine 
@@ -154,7 +140,7 @@ allBlankMinesweeper = Minesweeper (replicate 10 (replicate 10 (Just 0)))
 
 --Function to check how many neighbours are bombs and set number
 checkNeighbours :: Minesweeper -> Pos -> Minesweeper
-checkNeighbours minesw (x,y) 
+checkNeighbours minesw (x,y)
     | x == 9 && y > 9 = minesw --checked all cells
     | y <= 9 && isBomb' minesw (x,y) = checkNeighbours minesw (x,y+1) --cell is bomb, pass on to next cell in row
     | y > 9 = checkNeighbours minesw (x+1,0) --col index out of bounds, start on new row
@@ -184,7 +170,7 @@ getValue :: Minesweeper -> Pos -> Maybe Int
 getValue mine (x,y)
         | isValid (x,y) = (rows mine !! x) !! y
         | otherwise = Just 0
-                        
+
 --Checks if a position is valid
 isValid :: Pos -> Bool
 isValid (x,y) = x' && y'
@@ -201,11 +187,6 @@ isBomb' mine (x,y) = isNothing ((rows mine !! x) !! y)
     --else check all neighbours is bomb
     --start counter and set number to counter, pass on
 
---bombMaker :: StdGen -> [Int] -> [Int]
---bombMaker g list | length list == 10 = list
- --                | otherwise = bombMaker g' newList
-  --                  where (number, g') = randomR (0, 99) g
-   --                       newList = nub (list ++ [number])
 
 findFirst :: [Char] -> Pos
 findFirst [] = (11,11)
@@ -217,33 +198,33 @@ findSecond [] _ = (11,11)
 findSecond (x:xs) int | isDigit x = (int, (digitToInt x))
                       | otherwise = findSecond xs int
 
+makeBombs :: StdGen -> Minesweeper
+makeBombs g = newMinesweeper (combineRows(shuffle g (concat (rows example))))
 
-bombMaker :: StdGen -> [Int] -> [Int]
-bombMaker g list | length list == 10 = list
-                 | otherwise = bombMaker g' newList
-                    where (number, g') = randomR (0, 99) g
-                          newList = nub (list ++ [number])
+newMinesweeper :: [[Maybe Int]] -> Minesweeper
+newMinesweeper minesweeper = Minesweeper {rows = minesweeper}
+
+combineRows :: [Maybe Int] -> [[Maybe Int]]
+combineRows [] = [[]]
+combineRows list = [take 10 list] ++ combineRows (drop 10 list)
+
+shuffle :: StdGen -> [a] -> [a]
+shuffle _ [] = []
+shuffle g list  = [list !! number] ++ shuffle g' reducedList
+  where
+    (number, g') = randomR (0, (length list) - 1) g
+    reducedList = removeIndex list number
+
+removeIndex :: [a] -> Int -> [a]
+removeIndex [] _                      = []
+removeIndex (x:xs) index | index == 0 = xs
+                         | otherwise  = [x] ++ removeIndex xs (index-1)
+
 
 main :: IO ()
 main = do putStrLn "Welcome to Minesweeper Pro"
           g <- newStdGen
-          gameLoop example
-
-a = [1..19]
-
---printBombMaker :: [Int] -> IO ()
---printBombMaker list = putStrLn (unlines testChar list)
-
---test :: IO ()
---test = do putStrLn "Test"
---          g <- newStdGen
---          printBombMaker (bombMaker g a)
-
-
-testChar :: [Int] -> [Char]
-testChar [] = []
-testChar (x:xs) = [(intToDigit x)] ++ testChar xs
-
+          gameLoop (makeBombs g)
 
 gameLoop :: Minesweeper -> IO ()
 gameLoop minesweeper =
