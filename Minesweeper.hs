@@ -52,7 +52,8 @@ makeActualChar :: Maybe Int -> [Char]
 makeActualChar Nothing = "* "
 makeActualChar (Just n) | n == 0    = "_ "
                         | n == 9   = "* "
-                        | otherwise = [(intToDigit n)] ++ " "
+                        | (mod n 10) == 0 = "_ "
+                        | otherwise = [intToDigit (mod n 10)] ++ " "
 
 printMinesweeper :: Minesweeper -> [Char] ->  IO ()
 printMinesweeper minesweeper string = putStrLn (unlines (map makeAString (rows minesweeper)) ++ string)
@@ -83,14 +84,14 @@ checkContent minesweeper (x,y) | isNothing ((rows minesweeper !! x) !! y) = Just
 
 openCells :: Minesweeper ->  Pos -> Minesweeper
 openCells mine pos@(x,y)
-    | ((not $ isValid pos) || getValue mine pos == Nothing) = mine 
-    | getValue mine pos /= (Just 0) = openCell' mine pos 
+    | ((not $ isValid pos) || getValue mine pos == Nothing) = mine
+    | getValue mine pos /= (Just 0) = openCell' mine pos
     | otherwise = north
           where mine' = changeCell mine pos (Just 10)
-                east = openCells mine' (x+1, y) 
-                west = openCells east (x-1, y) 
-                south = openCells west (x, y+1) 
-                north = openCells south (x, y-1) 
+                east = openCells mine' (x+1, y)
+                west = openCells east (x-1, y)
+                south = openCells west (x, y+1)
+                north = openCells south (x, y-1)
 
 openCell' :: Minesweeper -> Pos -> Minesweeper
 openCell' mine (x,y) = changeCell' mine (x,y) (Just 10)
@@ -174,19 +175,12 @@ getValue mine (x,y)
 --Checks if a position is valid
 isValid :: Pos -> Bool
 isValid (x,y) = x' && y'
-    where x' = x >= 0 && x <= 9 
-          y' = y >= 0 && y <= 9 
+    where x' = x >= 0 && x <= 9
+          y' = y >= 0 && y <= 9
 
 --Helper function to checkneighbours, checks if a cell is a bomb
 isBomb' :: Minesweeper -> Pos -> Bool
 isBomb' mine (x,y) = isNothing ((rows mine !! x) !! y)
---start at 0,0
---recirsively pass on to down and right neighbour
---check if pos is a bomb
-    --if bomb: pass on
-    --else check all neighbours is bomb
-    --start counter and set number to counter, pass on
-
 
 findFirst :: [Char] -> Pos
 findFirst [] = (11,11)
@@ -221,18 +215,20 @@ removeIndex (x:xs) index | index == 0 = xs
                          | otherwise  = [x] ++ removeIndex xs (index-1)
 
 
+
+                         
 main :: IO ()
 main = do putStrLn "Welcome to Minesweeper Pro"
           g <- newStdGen
-          gameLoop (makeBombs g)
+          gameLoop (checkNeighbours (makeBombs g) (0,0))
 
 gameLoop :: Minesweeper -> IO ()
 gameLoop minesweeper =
   do printMinesweeper minesweeper "Open a block with (x,y)"
-     cell <- getLine
-     if not (findFirst cell == (11,11))
-       then if gameOver $ openCell minesweeper (findFirst cell)
-         then finishGame $ openCell minesweeper (findFirst cell)
-         else gameLoop (openCells minesweeper (findFirst cell))
+     pos <- getLine
+     if not (findFirst pos == (11,11))
+       then if gameOver $ openCell minesweeper (findFirst pos)
+         then finishGame $ openCell minesweeper (findFirst pos)
+         else gameLoop (openCells minesweeper (findFirst pos))
        else do putStrLn ("Please choose a correct position")
                gameLoop minesweeper
