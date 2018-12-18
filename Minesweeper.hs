@@ -181,14 +181,6 @@ findSecond [] _ = (11,11)
 findSecond (x:xs) int | isDigit x = (int, (digitToInt x))
                       | otherwise = findSecond xs int
 
-
-
-test :: IO ()
-test = do putStrLn "Test"
-          g <- newStdGen
-          printActualMinesweeper (newMinesweeper (combineRows(shuffle g (concat (rows example))))) "yes"
-          putStrLn "End plz"
-
 makeBombs :: StdGen -> Minesweeper
 makeBombs g = newMinesweeper (combineRows(shuffle g (concat (rows example))))
 
@@ -198,7 +190,6 @@ newMinesweeper minesweeper = Minesweeper {rows = minesweeper}
 combineRows :: [Maybe Int] -> [[Maybe Int]]
 combineRows [] = [[]]
 combineRows list = [take 10 list] ++ combineRows (drop 10 list)
-
 
 shuffle :: StdGen -> [a] -> [a]
 shuffle _ [] = []
@@ -211,16 +202,6 @@ removeIndex :: [a] -> Int -> [a]
 removeIndex [] _                      = []
 removeIndex (x:xs) index | index == 0 = xs
                          | otherwise  = [x] ++ removeIndex xs (index-1)
-
-
-
-
-
-a = [1..8]
-
-
-
-
 
 
 main :: IO ()
