@@ -46,27 +46,28 @@ printActualMinesweeper :: Minesweeper -> [Char] -> IO ()
 printActualMinesweeper minesweeper string= putStrLn (unlines (map makeActualString (rows minesweeper)) ++ string)
 
 makeActualString :: [Maybe Int] -> [Char]
-makeActualString row = map makeActualChar row
+makeActualString row = concatMap makeActualChar row
 
-makeActualChar :: Maybe Int -> Char
-makeActualChar Nothing = '*'
-makeActualChar (Just n) | n == 0    = '_'
-                        | n == 20   = '*'
-                        | otherwise = (intToDigit n)
+makeActualChar :: Maybe Int -> [Char]
+makeActualChar Nothing = "* "
+makeActualChar (Just n) | n == 0    = "_ "
+                        | n == 9   = "* "
+                        | otherwise = [(intToDigit n)] ++ " "
 
 printMinesweeper :: Minesweeper -> [Char] ->  IO ()
 printMinesweeper minesweeper string = putStrLn (unlines (map makeAString (rows minesweeper)) ++ string)
 
 makeAString :: [Maybe Int] -> [Char]
-makeAString row = map makeChar row
+makeAString row = concatMap makeChar row
 
 -- turns the elements into characters
-makeChar :: Maybe Int -> Char
-makeChar Nothing              = '+'
-makeChar (Just n) | n == 10   = '_'
-                  | n == 20   = 'X'
-                  | n > 10    = intToDigit (n - 10)
-                  | otherwise = '+'
+makeChar :: Maybe Int -> [Char]
+makeChar Nothing              = "+ "
+makeChar (Just n) | n == 0   = "+ "
+                  | n == 9   = "X "
+                  | mod n 10 == 0 = "_ "
+                  | n > 10    = [intToDigit (mod n 10)] ++ " "
+                  | otherwise = "+ "
 
 openCell :: Minesweeper -> Pos -> Minesweeper
 openCell minesweeper (x,y) = Minesweeper {rows = (!!=) (rows minesweeper) (abs x, row')}
@@ -75,14 +76,46 @@ openCell minesweeper (x,y) = Minesweeper {rows = (!!=) (rows minesweeper) (abs x
     row' = (!!=) row (abs y, checkContent minesweeper (x,y))
 
 checkContent :: Minesweeper -> Pos -> Maybe Int
-checkContent minesweeper (x,y) | isNothing ((rows minesweeper !! x) !! y) = Just 20
+checkContent minesweeper (x,y) | isNothing ((rows minesweeper !! x) !! y) = Just 9
                                | pos == 0 = Just 10
                                | otherwise = Just (pos + 10)
-  where Just pos = ((rows minesweeper !! x) !! y)
+  where Just pos = (rows minesweeper !! x) !! y
 
---Open surrounding empty cells. Stop when number > 0.
---openNeighbours :: Minesweeper -> Pos -> Minesweeper
---openNeighbours mine (x,y) 
+--openCells :: Minesweeper ->  Pos -> Maybe Int -> Maybe Int -> Minesweeper
+--openCells mine pos@(x,y) target replacement =
+ --   if((not $ isValid pos) || getValue mine (x,y) /= target) then mine 
+  --  else 
+   --   north
+    --  where mine' = changeCell mine pos replacement
+     --       east = openCells mine' (x+1, y) target replacement
+      --      west = openCells east (x-1, y) target replacement
+       --     south = openCells west (x, y+1) target replacement
+        --    north = openCells south (x, y-1) target replacement
+--if Nothing then do nothing
+--if Just n, where n > 0 then open then nothing
+--else continue
+
+openCells :: Minesweeper ->  Pos -> Minesweeper
+openCells mine pos@(x,y)
+    | ((not $ isValid pos) || getValue mine pos == Nothing) = mine 
+    | getValue mine pos /= (Just 0) = openCell' mine pos 
+    | otherwise = north
+          where mine' = changeCell mine pos (Just 10)
+                east = openCells mine' (x+1, y) 
+                west = openCells east (x-1, y) 
+                south = openCells west (x, y+1) 
+                north = openCells south (x, y-1) 
+
+openCell' :: Minesweeper -> Pos -> Minesweeper
+openCell' mine (x,y) = changeCell' mine (x,y) (Just 10)
+
+--Change a value at a given position to a given value
+changeCell :: Minesweeper -> Pos -> Maybe Int -> Minesweeper
+changeCell mine (x,y) value = if isValid (x,y) then Minesweeper { rows = (rows mine !!= (x, ((rows mine !! x) !!= (y, value)))) } else mine
+
+changeCell' :: Minesweeper -> Pos -> Maybe Int -> Minesweeper
+changeCell' mine (x,y) (Just n) = if isValid (x,y) then Minesweeper { rows = (rows mine !!= (x, ((rows mine !! x) !!= (y, Just (n+old))))) } else mine
+    where Just old = getValue mine (x,y)
 
 wonGame :: Minesweeper -> Bool
 wonGame minesweeper = getWonGameRows (rows minesweeper)
@@ -109,12 +142,11 @@ getGameOverRows (x:xs) | (isBomb x) == True = True
 isBomb :: [Maybe Int] -> Bool
 isBomb []                    = False
 isBomb (x:xs) | x == Nothing = isBomb xs
-              | x == Just 20 = True
+              | x == Just 9 = True
               | otherwise    = isBomb xs
 
 finishGame :: Minesweeper -> IO ()
 finishGame minesweeper = printActualMinesweeper minesweeper "Game Over!"
-
 
 --Returns a Minesweeper with no bombs
 allBlankMinesweeper :: Minesweeper
@@ -131,7 +163,7 @@ checkNeighbours minesw (x,y)
 
 --Count surrounding bombs and set cell to that number.
 countSurroundingBombs :: Minesweeper -> Pos -> [Maybe Int] -> Minesweeper
-countSurroundingBombs minesw (x,y) list = Minesweeper { rows = (rows minesw !!= (x, ((rows minesw !! x) !!= (y, Just count)))) }
+countSurroundingBombs minesw (x,y) list = changeCell minesw (x,y) (Just count)
         where count = length (filter isNothing list)
 
 -- | An operator that changes a value at a specific index to a new one
@@ -158,7 +190,6 @@ isValid :: Pos -> Bool
 isValid (x,y) = x' && y'
     where x' = x >= 0 && x <= 9 
           y' = y >= 0 && y <= 9 
-    
 
 --Helper function to checkneighbours, checks if a cell is a bomb
 isBomb' :: Minesweeper -> Pos -> Bool
@@ -221,6 +252,6 @@ gameLoop minesweeper =
      if not (findFirst cell == (11,11))
        then if gameOver $ openCell minesweeper (findFirst cell)
          then finishGame $ openCell minesweeper (findFirst cell)
-         else gameLoop (openCell minesweeper (findFirst cell))
+         else gameLoop (openCells minesweeper (findFirst cell))
        else do putStrLn ("Please choose a correct position")
                gameLoop minesweeper
