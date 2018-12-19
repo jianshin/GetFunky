@@ -152,13 +152,13 @@ wonGame minesweeper = getWonGameRows (rows minesweeper)
 -- | A helperfunction for checking if all rows meet the criteria for winning
 getWonGameRows :: [[Maybe Int]] -> Bool
 getWonGameRows []                                = True
-getWonGameRows (x:xs) | (isOkContent x) == False = False
+getWonGameRows (x:xs) | not (isOkContent x)      = False
                       | otherwise                = getWonGameRows xs
 
 -- | A helperfunction for checking if all elements in the rows are opened or are bombs
 isOkContent :: [Maybe Int] -> Bool
 isOkContent [] = True
-isOkContent (x:xs) | x == Nothing         = isOkContent xs
+isOkContent (x:xs) | isNothing x          = isOkContent xs
                    | (n > 9) && (n < 100) = isOkContent xs
                    | otherwise            = False
   where (Just n) = x
@@ -170,13 +170,13 @@ gameOver minesweeper = getGameOverRows (rows minesweeper)
 -- | A helperfunction for checking if a row contains an opened bomb
 getGameOverRows :: [[Maybe Int]] -> Bool
 getGameOverRows []                          = False
-getGameOverRows (x:xs) | (isBomb x) == True = True
+getGameOverRows (x:xs) | isBomb x = True
                        | otherwise          = getGameOverRows xs
 
 -- | A helperfunction that checks all if an element in a list is a opened bomb
 isBomb :: [Maybe Int] -> Bool
 isBomb []                    = False
-isBomb (x:xs) | x == Nothing = isBomb xs
+isBomb (x:xs) | isNothing x = isBomb xs
               | x == Just 9 = True
               | otherwise    = isBomb xs
 
@@ -211,9 +211,9 @@ countSurroundingBombs minesw (x,y) list = changeCell minesw (x,y) (Just count)
 
 -- | Make  list of neighbours
 listNeighbours :: Minesweeper -> Pos -> [Maybe Int]
-listNeighbours mine (x,y) = [getValue mine ((x-1),(y-1))]  ++ [getValue mine ((x-1),y)] ++ [getValue mine ((x-1),(y+1))]
-                       ++ [getValue mine (x,(y-1))] ++ [getValue mine (x,(y+1))]
-                       ++ [getValue mine ((x+1),(y-1))] ++ [getValue mine ((x+1),y)] ++ [getValue mine ((x+1),(y+1))]
+listNeighbours mine (x,y) = [getValue mine (x-1,y-1)]  ++ [getValue mine (x-1,y)] ++ [getValue mine (x-1,y+1)]
+                       ++ [getValue mine (x,y-1)] ++ [getValue mine (x,y+1)]
+                       ++ [getValue mine (x+1,y-1)] ++ [getValue mine (x+1,y)] ++ [getValue mine (x+1,y+1)]
 
 -- | Get value at a position in Minesweeper
 getValue :: Minesweeper -> Pos -> Maybe Int
@@ -295,7 +295,7 @@ openFlag minesweeper (x,y) | (getValue minesweeper (x,y)) == Just 19 = Minesweep
      where row = (!!) (rows minesweeper) (abs x)
            row' = (!!=) row (abs y, Nothing)
            row'' = (!!=) row (abs y, (Just (n - 100)))
-           Just n = (getValue minesweeper (x,y))
+           Just n = getValue minesweeper (x,y)
 
 -- | A function that takes all the rows in a minesweeper and put them in a single list that can be shuffeled
 makeBombs :: StdGen -> Minesweeper
@@ -335,21 +335,21 @@ gameLoop :: Minesweeper -> IO ()
 gameLoop minesweeper =
   do printMinesweeper minesweeper "Open a block with xy, put a flag with Fxy and open flags with Oxy"
      pos <- getLine
-     if (findFirst pos == (11,11))
-       then do putStrLn ("Please choose a correct position")
+     if findFirst pos == (11,11)
+       then do putStrLn "Please choose a correct position"
                gameLoop minesweeper
-       else if (findFirst pos == (12,12))
+       else if findFirst pos == (12,12)
          then gameLoop (putFlag minesweeper (findFirst' pos))
-         else if (findFirst pos == (13,13))
+         else if findFirst pos == (13,13)
            then gameLoop (openFlag minesweeper (findFirst' pos))
            else if gameOver (openCell minesweeper (findFirst pos))
              then finishGame (openCell minesweeper (findFirst pos))
              else if wonGame (openCells minesweeper (findFirst pos))
-               then do printMinesweeper (openCells minesweeper (findFirst pos)) "Congratulations, you have beaten Minesweeper Pro!"
+               then printMinesweeper (openCells minesweeper (findFirst pos)) "Congratulations, you have beaten Minesweeper Pro!"
              else gameLoop (openCells minesweeper (findFirst pos))
 
 prop_isMinesweeper :: Minesweeper -> Bool
-prop_isMinesweeper m = isMinesweeper m
+prop_isMinesweeper = isMinesweeper
 
 prop_GetValue :: Minesweeper -> Pos -> Bool
 prop_GetValue m p@(x,y) = getValue m (x',y') == (rows m !! x') !! y'
