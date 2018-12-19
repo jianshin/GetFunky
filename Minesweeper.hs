@@ -156,7 +156,7 @@ isOkContent :: [Maybe Int] -> Bool
 isOkContent [] = True
 isOkContent (x:xs) | ((x == Nothing || n > 9) && (n < 100)) = isOkContent xs
                    | otherwise = False
-  where Just n = x
+  where (Just n) = x
 
 -- | A function that checks if the game is lost
 gameOver :: Minesweeper -> Bool
@@ -346,6 +346,8 @@ gameLoop minesweeper =
 prop_isMinesweeper :: Minesweeper -> Bool
 prop_isMinesweeper m = isMinesweeper m
 
-prop_OpenCell :: Minesweeper -> Pos -> Bool
-prop_OpenCell m p | (getValue pos) == Nothing = openCell m p == (Just 9)
-                  | 
+prop_GetValue :: Minesweeper -> Pos -> Bool
+prop_GetValue m p@(x,y) = getValue m (x',y') == (rows m !! x') !! y'
+  where
+    x' = mod (abs x) 10
+    y' = mod (abs y) 10
