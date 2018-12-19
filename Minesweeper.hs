@@ -127,8 +127,12 @@ openCells mine pos@(x,y)
           where mine' = changeCell mine pos (Just 10)
                 east = openCells mine' (x+1, y)
                 west = openCells east (x-1, y)
-                south = openCells west (x, y+1)
-                north = openCells south (x, y-1)
+                southEast = openCells west (x-1, y+1)
+                southWest = openCells southEast (x-1, y-1)
+                south = openCells southWest (x, y+1)
+                northWest = openCells south (x+1, y-1)
+                northEast = openCells northWest (x+1, y+1)
+                north = openCells northEast (x, y-1)
 
 openCell' :: Minesweeper -> Pos -> Minesweeper
 openCell' mine (x,y) = changeCell' mine (x,y) (Just 10)
@@ -154,7 +158,8 @@ getWonGameRows (x:xs) | (isOkContent x) == False = False
 -- | A helperfunction for checking if all elements in the rows are opened or are bombs
 isOkContent :: [Maybe Int] -> Bool
 isOkContent [] = True
-isOkContent (x:xs) | ((x == Nothing || n > 9) && (n < 100)) = isOkContent xs
+isOkContent (x:xs) | x == Nothing = isOkContent xs
+                   | (n > 9) && (n < 100) = isOkContent xs
                    | otherwise = False
   where (Just n) = x
 
