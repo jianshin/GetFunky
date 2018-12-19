@@ -22,13 +22,13 @@ instance Arbitrary Minesweeper where
 
 
 example :: Minesweeper
-example = Minesweeper [[n  ,n  ,j 1,j 0,j 1,n  ,j 1,j 0,j 1,n   ],
+example = Minesweeper [[n  ,j 0,j 1,j 0,j 1,n  ,j 1,j 0,j 1,j 0 ],
                        [j 2,j 2,j 1,j 0,j 1,j 1,j 1,j 0,j 1,j 1 ],
                        [j 0,j 0,j 0,j 0,j 0,j 0,j 0,j 0,j 0,j 0 ],
                        [j 0,j 0,j 0,j 0,j 0,j 0,j 0,j 0,j 0,j 0 ],
                        [j 1,j 1,j 1,j 0,j 0,j 0,j 0,j 0,j 0,j 0 ],
-                       [j 1,n  ,j 2,j 1,j 1,n  ,j 0,j 0,j 0,j 0 ],
-                       [j 1,j 1,j 2,n  ,j 1,j 0,j 0,j 0,j 0,j 0 ],
+                       [j 1,j 0,j 2,j 1,j 1,j 0,j 0,j 0,j 0,j 0 ],
+                       [j 1,j 1,j 2,j 0,j 1,j 0,j 0,j 0,j 0,j 0 ],
                        [j 0,j 0,j 1,j 1,j 2,j 1,j 1,j 0,j 0,j 0 ],
                        [j 1,j 1,j 0,j 0,j 1,n  ,j 1,j 1,j 1,j 1 ],
                        [n  ,j 1,j 0,j 0,j 1,j 1,j 1,j 1,n  ,j 1 ]]
@@ -158,9 +158,9 @@ getWonGameRows (x:xs) | (isOkContent x) == False = False
 -- | A helperfunction for checking if all elements in the rows are opened or are bombs
 isOkContent :: [Maybe Int] -> Bool
 isOkContent [] = True
-isOkContent (x:xs) | x == Nothing = isOkContent xs
+isOkContent (x:xs) | x == Nothing         = isOkContent xs
                    | (n > 9) && (n < 100) = isOkContent xs
-                   | otherwise = False
+                   | otherwise            = False
   where (Just n) = x
 
 -- | A function that checks if the game is lost
