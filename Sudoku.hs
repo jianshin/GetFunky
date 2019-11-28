@@ -2,7 +2,7 @@ module Sudoku where
 
 import Data.Maybe
 import Data.Char
-import Data.List
+import Data.List hiding (findIndices)
 import Test.QuickCheck
 
 -------------------------------------------------------------------
@@ -290,3 +290,13 @@ isSolutionOf solvedSudoku toSolve = Just solvedSudoku == solve toSolve
 -- | A function that tests if the solutions are valid
 prop_SolveSound :: Sudoku -> Property
 prop_SolveSound sudoku = isJust (solve sudoku) ==> fromJust (solve sudoku) `isSolutionOf` sudoku
+
+
+--Problem 1
+findIndices :: (a->Bool) -> [a] -> [Int]
+findIndices f list = fi2 f list 0 []
+
+fi2 :: (a -> Bool) -> [a] -> Int -> [Int] -> [Int]
+fi2 _ [] _ list = list
+fi2 f (x:xs) index list | f x == True = fi2 f xs (index + 1) (list ++ [index])
+                        | otherwise = fi2 f xs (index + 1) list
